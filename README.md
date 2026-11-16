@@ -1,65 +1,76 @@
-# Student Management System (Full-Stack Project)
+# Student Management System
 
-A simple beginner-level full-stack web application for managing student records (Add, View, Edit, Delete).
+A full-stack student-record application with a React frontend and a Spring Boot REST API. It supports creating, viewing, editing, deleting, and searching student records.
 
-**Tech stack:**
-- **Frontend:** React (JavaScript)
-- **Backend:** Java + Spring Boot (REST API)
-- **Database:** H2 (in-memory, no installation required)
+## Features
 
----
+- Add a student with a name, email address, and course
+- List all students, sorted alphabetically by name
+- Edit existing student records
+- Delete records with confirmation
+- Search the loaded records by name, email, or course
+- Client- and server-side required-field and email validation
+- Case-insensitive duplicate-email protection
+- Loading, success, and error states in the frontend
+- H2 web console for inspecting the in-memory database
 
-## Project Structure
+## Technology
 
-```
+- **Frontend:** React 18, Axios, Create React App
+- **Backend:** Java 17, Spring Boot 3.2.5, Spring Web, Spring Data JPA
+- **Database:** H2 in-memory database
+- **Build tools:** npm and Maven
+
+## Project structure
+
+```text
 student-management-project/
-├── backend/        -> Spring Boot REST API (runs on port 8080)
-└── frontend/        -> React app (runs on port 3000)
+├── backend/
+│   ├── pom.xml
+│   └── src/main/
+│       ├── java/com/example/studentapi/
+│       │   ├── StudentApiApplication.java
+│       │   ├── controller/
+│       │   │   ├── ApiExceptionHandler.java
+│       │   │   └── StudentController.java
+│       │   ├── model/Student.java
+│       │   └── repository/StudentRepository.java
+│       └── resources/application.properties
+├── frontend/
+│   ├── package.json
+│   └── src/
+│       ├── App.js
+│       ├── api.js
+│       └── components/
+│           ├── StudentForm.js
+│           └── StudentList.js
+└── README.md
 ```
 
-## How It Works (for your project report / viva)
+## Prerequisites
 
-1. The **React frontend** has a form to add/edit students and a table to list/delete them.
-2. The frontend calls the **Spring Boot REST API** using `axios` (see `frontend/src/api.js`).
-3. The **backend** has 3 layers:
-   - `model/Student.java` — defines the Student entity (name, email, course).
-   - `repository/StudentRepository.java` — talks to the database (Spring Data JPA).
-   - `controller/StudentController.java` — exposes REST endpoints (`GET`, `POST`, `PUT`, `DELETE`).
-4. Data is stored in an **H2 in-memory database** — no MySQL/Postgres installation needed. (Note: data resets every time you restart the backend. See "Using a permanent database" below if you want data to persist.)
+Install the following:
 
-### API Endpoints
+- Java 17 or newer
+- Maven 3.8 or newer
+- Node.js and npm
 
-| Method | URL                      | Description            |
-|--------|--------------------------|------------------------|
-| GET    | /api/students            | Get all students       |
-| GET    | /api/students/{id}       | Get one student        |
-| POST   | /api/students            | Add a new student      |
-| PUT    | /api/students/{id}       | Update a student       |
-| DELETE | /api/students/{id}       | Delete a student       |
+## Run locally
 
----
+### 1. Start the backend
 
-## How to Run
-
-You need **Java 17+**, **Maven**, and **Node.js** installed.
-
-### 1. Run the backend (Spring Boot)
+From the project root:
 
 ```bash
 cd backend
 mvn spring-boot:run
 ```
 
-The API will start at **http://localhost:8080**.
+The API starts at `http://localhost:8080`.
 
-You can check it's working by opening **http://localhost:8080/api/students** in your browser — it should show `[]` (empty list).
+### 2. Start the frontend
 
-You can also view the database directly at **http://localhost:8080/h2-console**
-(JDBC URL: `jdbc:h2:mem:studentdb`, username: `sa`, password: blank).
-
-### 2. Run the frontend (React)
-
-Open a **second terminal**:
+Open a second terminal at the project root:
 
 ```bash
 cd frontend
@@ -67,33 +78,87 @@ npm install
 npm start
 ```
 
-The app will open automatically at **http://localhost:3000**.
+The React development server starts at `http://localhost:3000`.
 
-> ⚠️ Make sure the backend is already running before you use the frontend, or you'll see a connection error banner.
+The frontend uses `http://localhost:8080/api/students` by default. To point it at another API URL, set `REACT_APP_API_URL` before starting or building the frontend:
 
----
-
-## Using a Permanent Database (Optional Upgrade)
-
-By default this uses H2 in-memory storage, which is simplest for a beginner project but **resets every time you restart the backend**. If your teacher wants persistent storage, switch to file-based H2 (still zero setup) by changing one line in `backend/src/main/resources/application.properties`:
-
-```properties
-spring.datasource.url=jdbc:h2:file:./data/studentdb
+```bash
+REACT_APP_API_URL=http://localhost:8080/api/students npm start
 ```
 
-Or, for a real database, swap in MySQL by changing the datasource URL/driver and adding the MySQL connector dependency to `pom.xml`.
+On Windows PowerShell:
 
----
+```powershell
+$env:REACT_APP_API_URL = "http://localhost:8080/api/students"
+npm start
+```
 
-## Possible Enhancements (if you want to extend it further)
+## REST API
 
-- Add search/filter by course
-- Add pagination for large student lists
-- Add authentication (login/signup)
-- Add form validation messages shown inline
-- Deploy backend (Render/Railway) and frontend (Vercel/Netlify)
+Base URL: `http://localhost:8080/api/students`
 
----
+| Method | Endpoint | Success response | Description |
+| --- | --- | --- | --- |
+| `GET` | `/api/students` | `200 OK` | Returns all students sorted by name |
+| `GET` | `/api/students/{id}` | `200 OK` | Returns one student |
+| `POST` | `/api/students` | `201 Created` | Creates a student |
+| `PUT` | `/api/students/{id}` | `200 OK` | Updates a student |
+| `DELETE` | `/api/students/{id}` | `204 No Content` | Deletes a student |
+
+### Student object
+
+```json
+{
+  "id": 1,
+  "name": "Alex Johnson",
+  "email": "alex@example.com",
+  "course": "B.E. CSE"
+}
+```
+
+For `POST` and `PUT`, `name`, `email`, and `course` are required. Emails must be valid and are normalized to lowercase. A duplicate email returns `409 Conflict`. Validation errors return `400 Bad Request` with a `message` and field-level `errors`. Requests for missing IDs return `404 Not Found`.
+
+Example:
+
+```bash
+curl -X POST http://localhost:8080/api/students \
+  -H "Content-Type: application/json" \
+  -d "{\"name\":\"Alex Johnson\",\"email\":\"alex@example.com\",\"course\":\"B.E. CSE\"}"
+```
+
+## Database and H2 console
+
+The backend uses an H2 in-memory database with:
+
+- JDBC URL: `jdbc:h2:mem:studentdb`
+- Username: `sa`
+- Password: blank
+
+Open `http://localhost:8080/h2-console` while the backend is running and use the JDBC URL above to connect. Because the database is in memory, records are reset when the backend restarts.
+
+## Build commands
+
+Build the backend:
+
+```bash
+cd backend
+mvn clean package
+```
+
+Create a production frontend build:
+
+```bash
+cd frontend
+npm run build
+```
+
+The generated frontend files are written to `frontend/build/` and are excluded from Git.
+
+## Notes
+
+- The backend allows cross-origin requests so the development frontend can call the API on port 8080.
+- Frontend search filters the records already loaded from the API; it does not make a separate search request.
+- The default H2 configuration is intended for local development and demonstrations. Use a persistent database and review CORS and H2-console settings before production deployment.
 
 ## Author
 
