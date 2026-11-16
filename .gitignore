@@ -1,0 +1,13 @@
+# Java / Maven build artifacts
+backend/target/
+backend/.mvn-repository/
+
+# Node / React build artifacts
+frontend/node_modules/
+frontend/build/
+
+# Editor and operating-system files
+.idea/
+.vscode/
+*.iml
+.DS_Store
